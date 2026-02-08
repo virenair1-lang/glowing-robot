@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productivity App</title>
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Productivity%20App%22%2C%22short_name%22%3A%22ProdApp%22%2C%22description%22%3A%22A%20simple%20app%20for%20tasks%2C%20notes%2C%20study%20plans%2C%20and%20links.%22%2C%22start_url%22%3A%22%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23121212%22%2C%22theme_color%22%3A%22%231e1e1e%22%7D">
+    <style>
+        /* Mobile-first responsive design with dark mode */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212; /* Dark background */
+            color: #ffffff; /* Light text */
+            line-height: 1.5;
+            font-size: 16px;
+        }
+
+        header {
+            background-color: #1e1e1e;
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        main {
+            padding: 10px;
+        }
+
+        section {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+
+        input, textarea, ul {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        input, textarea {
+            padding: 8px;
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background-color: #2a2a2a;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+
+        li.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        a {
+            color: #4fc3f7;
+            text-decoration: none;
+        }
+
+        /* Responsive for tablets/desktops */
+        @media (min-width: 768px) {
+            body {
+                font-size: 18px;
+            }
+            main {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Productivity App</h1>
+        <button id="clear-all">Clear All Data</button>
+    </header>
+    
+    <main>
+        <!-- Task List Section -->
+        <section id="tasks">
+            <h2>Tasks</h2>
+            <input type="text" id="task-input" placeholder="Add a new task...">
+            <button id="add-task">Add Task</button>
+            <ul id="task-list"></ul>
+        </section>
+        
+        <!-- Notes Section -->
+        <section id="notes">
+            <h2>Notes</h2>
+            <textarea id="notes-text" placeholder="Write your notes here..."></textarea>
+        </section>
+        
+        <!-- Study Planner Section -->
+        <section id="study-planner">
+            <h2>Study Planner</h2>
+            <input type="text" id="study-input" placeholder="Add a study item...">
+            <button id="add-study">Add Item</button>
+            <ul id="study-list"></ul>
+        </section>
+        
+        <!-- Resource Links Section -->
+        <section id="links">
+            <h2>Resource Links</h2>
+            <input type="url" id="link-input" placeholder="Add a link (e.g., https://example.com)">
+            <button id="add-link">Add Link</button>
+            <ul id="link-list"></ul>
+        </section>
+    </main>
+    
+    <script>
+        // Productivity App JavaScript - Modular and beginner-friendly
+
+        // Data keys for localStorage
+        const STORAGE_KEYS = {
+            tasks: 'productivityTasks',
+            notes: 'productivityNotes',
+            study: 'productivityStudy',
+            links: 'productivityLinks'
+        };
+
+        // Load data from localStorage
+        function loadData() {
+            return {
+                tasks: JSON.parse(localStorage.getItem(STORAGE_KEYS.tasks)) || [],
+                notes: localStorage.getItem(STORAGE_KEYS.notes) || '',
+                study: JSON.parse(localStorage.getItem(STORAGE_KEYS.study)) || [],
+                links: JSON.parse(localStorage.getItem(STORAGE_KEYS.links)) || []
+            };
+        }
+
+        // Save data to localStorage
+        function saveData(data) {
+            localStorage.setItem(STORAGE_KEYS.tasks, JSON.stringify(data.tasks));
+            localStorage.setItem(STORAGE_KEYS.notes, data.notes);
+            localStorage.setItem(STORAGE_KEYS.study, JSON.stringify(data.study));
+            localStorage.setItem(STORAGE_KEYS.links, JSON.stringify(data.links));
+        }
+
+        // Initialize app on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const data = loadData();
+            renderTasks(data.tasks);
+            renderNotes(data.notes);
+            renderStudy(data.study);
+            renderLinks(data.links);
+            
+            // Event listeners for user interactions
+            setupEventListeners(data);
+        });
+
+        // Render tasks list
+        function renderTasks(tasks) {
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+            tasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.className = task.completed ? 'completed' : '';
+                li.innerHTML = `
+                    <span>${task.text}</span>
+                    <div>
+                        <button onclick="toggleTask(${index})">✓</button>
+                        <button onclick="deleteTask(${index})">✗</button>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        // Add a new task
+        function addTask() {
+            const input = document.getElementById('task-input');
+            if (input.value.trim()) {
+                const data = loadData();
+                data.tasks.push({ text: input.value.trim(), completed: false });
+                saveData(data);
+                renderTasks(data.tasks);
+                input.value = '';
+            }
+        }
+
+        // Toggle task completion
+        function toggleTask(index) {
+            const data = loadData();
+            data.tasks[index].completed = !data.tasks[index].completed;
+            saveData(data);
+            renderTasks(data.tasks);
+        }
+
+        // Delete a task
+        function deleteTask(index) {
+            const data = loadData();
+            data.tasks.splice(index, 1);
+            saveData(data);
+            renderTasks(data.tasks);
+        }
+
+        // Render notes
+        function renderNotes(notes) {
+            document.getElementById('notes-text').value = notes;
+        }
+
+        // Save notes on input change (auto-save)
+        function saveNotes() {
+            const data = loadData();
+            data.notes = document.getElementById('notes-text').value;
+            saveData(data);
+        }
+
+        // Render study planner
+        function renderStudy(study) {
+            const list = document.getElementById('study-list');
+            list.innerHTML = '';
+            study.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${item.text}</span>
+                    <button onclick="deleteStudy(${index})">✗</button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        // Add study item
+        function addStudy() {
+            const input = document.getElementById('study-input');
+            if (input.value.trim()) {
+                const data = loadData();
+                data.study.push({ text: input.value.trim() });
+                saveData(data);
+                renderStudy(data.study);
+                input.value = '';
+            }
+        }
+
+        // Delete study item
+        function deleteStudy(index) {
+            const data = loadData();
+            data.study.splice(index, 1);
+            saveData(data);
+            renderStudy(data.study);
+        }
+
+        // Render links
+        function renderLinks(links) {
+            const list = document.getElementById('link-list');
+            list.innerHTML = '';
+            links.forEach((link, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a href="${link.url}" target="_blank">${link.url}</a>
+                    <button onclick="deleteLink(${index})">✗</button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        // Add link
+        function addLink() {
+            const input = document.getElementById('link-input');
+            if (input.value.trim()) {
+                const data = loadData();
+                data.links.push({ url: input.value.trim() });
+                saveData(data);
+                renderLinks(data.links);
+                input.value = '';
+            }
+        }
+
+        // Delete link
+        function deleteLink(index) {
+            const data = loadData();
+            data.links.splice(index, 1);
+            saveData(data);
+            renderLinks(data.links);
+        }
+
+        // Clear all data
+        function clearAllData() {
+            if (confirm('Are you sure? This will delete all data.')) {
+                localStorage.clear();
+                location.reload(); // Simple reload to reset UI
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners(data) {
+            document.getElementById('add-task').addEventListener('click', addTask);
+            document.getElementById('task-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTask();
+            });
+            
+            document.getElementById('notes-text').addEventListener('blur', saveNotes);
+            
+            document.getElementById('add-study').addEventListener('click', addStudy);
+            document.getElementById('study-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addStudy();
+            });
+            
+            document.getElementById('add-link').addEventListener('click', addLink);
+            document.getElementById('link-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addLink();
+            });
+            
+            document.getElementById('clear-all').addEventListener('click', clearAllData);
+        }
+    </script>
+</body>
+</html>
